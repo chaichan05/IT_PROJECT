@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Navbar from "../component/Navbar";
 
 const LostPage = () => {
   const [lostItem, setLostItem] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     axios
@@ -15,6 +17,7 @@ const LostPage = () => {
       })
       .catch((error) => {
         console.log("Error fetching lost item: ", error);
+        setError("Unable to load lost items. Please try again shortly.");
         setLoading(false);
       });
   }, []);
@@ -22,9 +25,15 @@ const LostPage = () => {
   if (loading) {
     return <div className="p-6">กำลังโหลดข้อมูล...</div>;
   }
+  if (error) {
+    return <div className="app-page-with-navbar"><Navbar /><main className="p-6"><p className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</p></main></div>;
+  }
+
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
+    <div className="app-page-with-navbar">
+      <Navbar />
+      <main className="max-w-5xl mx-auto p-6">
       <h3 className="text-2xl font-semibold mb-6">รายการของหาย</h3>
 
       {lostItem.length === 0 ? (
@@ -54,10 +63,12 @@ const LostPage = () => {
                   }}
                 />
               )}
+              {/* ส่งรายการของหายไปค้นหารายการของพบที่ใกล้เคียง */}
             </div>
           ))}
         </div>
       )}
+      </main>
     </div>
   );
 };

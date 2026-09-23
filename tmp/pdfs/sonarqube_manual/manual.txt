@@ -1,0 +1,156 @@
+คู่มือการใช้งาน SonarQube
+สําหรับการสอนวิเคราะห์คุณภาพและความปลอดภัยของโค้ด
+ตัวอย่างระบบ: OWASP Juice Shop
+จัดทําโดย อาจารย์ ดร. สุริยะ พินิจการ
+ภาควิชาเทคโนโลยีสารสนเทศและการสื5อสาร คณะศิลปศาสตร์และวิทยาศาสตร์ มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตกําแพงแสน
+
+-- 1 of 6 --
+
+สารบัญ
+1. ภาพรวมและวัตถุประสงค์
+2. การติดตัFง SonarQube ด้วย Docker
+3. การเตรียมระบบตัวอย่าง (OWASP Juice Shop)
+4. การสร้าง Token
+5. การสแกนโค้ดด้วย SonarScanner
+6. การอ่านผลรายงานบนเว็บ SonarQube
+7. การส่งออกรายงานเป็นไฟล์ PDF
+8. การแก้ปัญหาที5พบบ่อย (Troubleshooting)
+9. แนวทางการใช้สอนในคาบเรียน
+
+-- 2 of 6 --
+
+1. ภาพรวมและวัตถุประสงค์
+SonarQube เป็นเครื5องมือวิเคราะห์คุณภาพและความปลอดภัยของโค้ด (Static Code Analysis) ที5ใช้กันแพร่หลายในอุตสาหกรรม
+คู่มือนีFจัดทําขึFนเพื5อใช้สอนนักศึกษาให้เข้าใจแนวคิด Code Quality, Security Vulnerabilities และ Quality Gate
+โดยใช้ระบบตัวอย่างที5มีช่องโหว่ให้เห็นชัดเจน คือ OWASP Juice Shop
+สิ#งที#นักศึกษาจะได้เรียนรู้
+• 	ติดตัFงและใช้งาน SonarQube Community Edition ผ่าน Docker
+• 	สแกนโค้ดจริงด้วย SonarScanner CLI
+• 	อ่านและตีความผลรายงาน (Bugs, Vulnerabilities, Code Smells, Coverage)
+• 	เข้าใจแนวคิด Quality Gate และ Technical Debt
+• 	ส่งออกผลการวิเคราะห์เป็นรายงาน PDF ผ่าน SonarQube Web API
+2. การติดตั8ง SonarQube ด้วย Docker
+รัน SonarQube Community Edition ด้วยคําสั5งเดียว:
+docker run -d --name sonarqube -p 9000:9000 sonarqube:community
+จากนัFนเปิดเบราว์เซอร์ไปที5 http://localhost:9000
+• 	Login เริ5มต้น: admin / admin
+• 	ระบบจะบังคับให้เปลี5ยนรหัสผ่านทันทีในการเข้าใช้ครัFงแรก
+หมายเหตุ: ไม่ต้องสร้าง Project, ตัFงค่า Quality Gate หรือ Quality Profile เพิ5มเอง — ใช้ค่า default ("Sonar way") ได้เลยสําหรับการสอน
+3. การเตรียมระบบตัวอย่าง (OWASP Juice Shop)
+OWASP Juice Shop เป็นเว็บแอปพลิเคชัน (Node.js/TypeScript + Angular) ที5ถูกออกแบบมาให้มีช่องโหว่ด้านความปลอดภัย
+จํานวนมากโดยเจตนา เหมาะสําหรับสอนในหมวด Vulnerabilities และ Security Hotspots
+git clone https://github.com/juice-shop/juice-shop.git
+cd juice-shop
+ไฟล์ตั;งค่า sonar-project.properties
+สร้างไฟล์นีFไว้ที5 root ของโฟลเดอร์ juice-shop:
+sonar.projectKey=juice-shop-demo
+sonar.projectName=Juice Shop Demo
+sonar.sources=.
+sonar.exclusions=node_modules/**,dist/**,build/**,frontend/dist/**
+sonar.javascript.node.maxspace=4096
+4. การสร้าง Token
+Token ใช้สําหรับยืนยันตัวตนตอนสั5ง scan และตอนดึงข้อมูลผ่าน API
+1. 	คลิกไอคอนโปรไฟล์มุมขวาบน (วงกลมตัวอักษร A) → My Account
+2. 	ไปที5แท็บ Security
+3. 	ตัFงชื5อ token เช่น juice-shop-scan
+4. 	เลือกประเภท Global Analysis Token
+5. 	กด Generate แล้ว copy เก็บไว้ทันที (จะแสดงให้เห็นครัFงเดียวเท่านัFน)
+
+-- 3 of 6 --
+
+หมายเหตุ: Token มีรูปแบบเช่น squ_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ระวังไม่ให้มีเว้นวรรคหรือสัญลักษณ์ < >
+ติดมาตอน copy
+5. การสแกนโค้ดด้วย SonarScanner
+รันคําสั5งนีFจากโฟลเดอร์ juice-shop (ที5มีไฟล์ sonar-project.properties):
+docker run --rm \
+--memory=8g \
+-e SONAR_HOST_URL="http://host.docker.internal:9000" \
+-e SONAR_TOKEN="<TOKEN ที# copy ไว้>" \
+-v "$(pwd):/usr/src" \
+sonarsource/sonar-scanner-cli
+Scan สําเร็จจะเห็นข้อความท้าย log ว่า:
+INFO 	EXECUTION SUCCESS
+6. การอ่านผลรายงานบนเว็บ SonarQube
+หลัง scan เสร็จ เข้าไปที5 Projects → juice-shop-demo จะเห็นหน้า Dashboard หลัก
+6.1 Quality Gate
+ป้ายสีเขียว (Passed) หรือสีแดง (Failed) แสดงผลรวมว่าโค้ดผ่านเกณฑ์คุณภาพขัFนตํ5าหรือไม่
+6.2 สี#หมวดหลัก
+หมวด 	ความหมาย 	Rating
+Reliability (Bugs) 	โค้ดที5รันแล้วพังหรือทํางานผิดจากที5ตัFงใจ 	A–E
+Security (Vulnerabilities) 	ช่องโหว่ที5โจมตีได้จริง เช่น SQL Injection, XSS 	A–E
+Security Review (Hotspots) 	โค้ดที5น่าสงสัย ต้องให้คนตรวจสอบว่าเป็นปัญหาจริงหรือไม่ 	% reviewed
+Maintainability (Code Smells) 	โค้ดใช้งานได้ แต่แก้ไขหรืออ่านยากในอนาคต 	A–E
+Rating: A = ดีที5สุด ไปจนถึง E = แย่ที5สุด (เหมือนระบบเกรด)
+6.3 การไล่ดู Issues
+• 	คลิกที5ตัวเลขในแต่ละหมวด (เช่น "127 Vulnerabilities") เพื5อเข้าหน้า Issues
+• 	ดู Severity: Blocker > Critical > Major > Minor > Info — ควรไล่ดูจาก Blocker ลงมาก่อน
+• 	คลิกแต่ละ issue เพื5อดูตําแหน่งโค้ดจริงและคําอธิบาย "Why is this an issue?"
+6.4 แนวคิดสําคัญอื#น ๆ
+• 	Coverage (%) — สัดส่วนโค้ดที5มี unit test ครอบคลุม
+• 	Duplications (%) — สัดส่วนโค้ดที5ซํFากันในโปรเจกต์
+• 	New Code vs Overall Code — SonarQube เน้นวัดคุณภาพของ "โค้ดใหม่" เป็นหลักในการทํางานจริง ซึ5งเป็น mindset
+สําคัญของทีมพัฒนา
+7. การส่งออกรายงานเป็นไฟล์ PDF
+SonarQube Community Edition ไม่มีปุ่ม Export PDF ในตัว (เป็นฟีเจอร์ของรุ่น Developer Edition ขึFนไป) จึงใช้สคริปต์
+sonar_report.py ดึงข้อมูลผ่าน Web API แล้วสร้างเป็น PDF แทน
+
+-- 4 of 6 --
+
+7.1 การติดตั;ง
+pip install requests reportlab
+7.2 การรันสคริปต์
+python3 sonar_report.py \
+--host http://localhost:9000 \
+--project juice-shop-demo \
+--token <TOKEN>
+ผลลัพธ์: ได้ไฟล์ juice-shop-demo_report.pdf ในโฟลเดอร์เดียวกัน
+7.3 ตัวเลือกเพิ#มเติม
+Flag 	ความหมาย 	ค่า default
+--output 	ตัFงชื5อไฟล์ PDF เอง 	<project>_report.pdf
+--top 	จํานวนตัวอย่าง issues ที5แสดงในรายงาน 	15
+7.4 เนื;อหาในรายงาน
+• 	หัวรายงาน: ชื5อโปรเจกต์, server, วันเวลาที5สร้าง
+• 	Quality Gate: แถบสีเขียว/แดงบอกผ่านหรือไม่ผ่าน
+• 	ตารางตัวชีFวัดหลัก: Bugs, Vulnerabilities, Security Hotspots, Code Smells, Coverage, Duplicated Lines, Lines
+of Code, Rating
+• 	ตาราง Issues แยกตาม Severity
+• 	ตัวอย่าง Issues ที5 severity สูงสุด พร้อมไฟล์และคําอธิบายย่อ
+8. การแก้ปัญหาทีGพบบ่อย (Troubleshooting)
+8.1 Bridge server is unresponsive / ปัญหาหน่วยความจํา
+อาการ: JS/TS analysis ล้มเหลว พร้อมข้อความ "The bridge server is unresponsive"
+สาเหตุ: Node.js bridge ที5ใช้วิเคราะห์ JS/TS มีหน่วยความจําไม่พอ (พบบ่อยเมื5อสแกน Juice Shop เพราะโปรเจกต์ใหญ่)
+วิธีแก้:
+• 	เพิ5ม property sonar.javascript.node.maxspace=4096 (หรือสูงกว่า) ในไฟล์ sonar-project.properties
+• 	เพิ5ม --memory=8g ให้กับคําสั5ง docker run
+• 	สําคัญที5สุดสําหรับ Mac: เพิ5ม Memory ให้ Docker Desktop เอง ที5 Settings → Resources → Memory (อย่างน้อย 8GB)
+เพราะ Docker Desktop มี VM จํากัด memory อีกชัFนหนึ5ง ต่อให้ตัFง --memory ใน container ก็ไม่ช่วยถ้า VM เองไม่มีให้
+• 	ถ้าเครื5อง RAM จํากัดจริง ให้ลด scope การสแกน โดย exclude โฟลเดอร์ frontend ออกไปก่อน
+8.2 HTTP 401 Unauthorized
+สาเหตุ: Token ผิด, พิมพ์ผิด, หมดอายุ หรือมีช่องว่างติดมาตอน copy
+วิธีแก้:
+• 	สร้าง Token ใหม่จาก My Account → Security
+• 	ตรวจสอบว่าไม่มีเว้นวรรคหรือสัญลักษณ์ < > ติดมา
+• 	ทดสอบ token ก่อนด้วยคําสั5ง: curl -u "<token>": http://localhost:9000/api/authentication/validate
+8.3 คําสั#งใน terminal ไม่ทํางาน (command not found)
+
+-- 5 of 6 --
+
+บรรทัดที5เป็นเนืFอหาไฟล์ (เช่น sonar.javascript.node.maxspace=4096) ต้องเพิ5มในไฟล์ sonar-project.properties เท่านัFน ห้ามพิมพ์ลง
+terminal ตรง ๆ
+8.4 Invalid character encountered ... (warning)
+เป็นแค่ WARNING ไม่ใช่ error — เกิดจากไฟล์รูปภาพ/วิดีโอ/ไฟล์ binary ที5 scanner พยายามอ่านเป็น text ไม่กระทบผลการวิเคราะห์ ไม่ต้องแก้ไข
+9. แนวทางการใช้สอนในคาบเรียน
+ลําดับการสอนที5แนะนํา:
+6. 	เปิดหน้า Dashboard ดู Quality Gate ก่อน (ภาพรวม Pass/Fail)
+7. 	ไล่ดู Vulnerabilities → Security Hotspots (จุดเด่นของ Juice Shop)
+8. 	เปิดตัวอย่าง 2-3 เคส คลิกดูโค้ดจริง พร้อมอ่าน "Why is this an issue?" ร่วมกัน
+9. 	ปิดท้ายด้วย Bugs และ Code Smells แบบเร็ว ๆ
+10. เชื5อมโยงแนวคิด New Code vs Overall Code เข้ากับการทํางานจริงใน CI/CD
+11. ให้นักศึกษารันสคริปต์ sonar_report.py เพื5อ export ผลเป็น PDF เก็บเป็นหลักฐานส่งงาน
+ข้อควรระวัง
+• 	Juice Shop ค่อนข้างหนักสําหรับ scan สด ๆ ในคาบ หากเครื5องนักศึกษามี RAM จํากัด แนะนํา pre-scan ไว้ล่วงหน้าและโชว์ผลจาก
+server กลางแทน
+• 	ควรกําชับนักศึกษาว่านี5คือระบบจําลองเพื5อการศึกษาเท่านัFน ห้ามนําเทคนิคไปใช้กับระบบจริงที5ไม่ได้รับอนุญาต
+
+-- 6 of 6 --
+

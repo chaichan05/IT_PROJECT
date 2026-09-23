@@ -9,6 +9,7 @@ const nodemailer = require("nodemailer")
 const userRoute = require("./routes/userRoute");
 const foundItemRoute = require("./routes/foundItemRoute");
 const lostItemRoute = require("./routes/lostItemRoute");
+const matchingRoute = require("./routes/matchingRoute");
 const swaggerUi = require("swagger-ui-express")
 const swaggerSpec = require("./swagger");
 const { validateEmail } = require("./validation");
@@ -31,6 +32,8 @@ app.use("/foundItem", foundItemRoute);
 app.use("/lostItem", lostItemRoute);
 app.use("/datalost", lostItemRoute);
 app.use("/datafound", foundItemRoute);
+// Endpoint สำหรับให้หน้าเว็บขอรายการของหาย/ของพบที่มีความใกล้เคียงกัน
+app.use("/matching", matchingRoute);
 app.use("/assets", express.static("assets"));
 
 // แปลงข้อผิดพลาดจากการอัปโหลดให้เป็นข้อความที่ client เข้าใจได้
@@ -266,6 +269,11 @@ const startServer = async () => {
     await db.query(
       "ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image TEXT"
     );
+    // รองรับฐานข้อมูลเดิม: เพิ่มคอลัมน์พิกัดโดยไม่ลบข้อมูลรายการเก่า
+    await db.query("ALTER TABLE lost_items ADD COLUMN IF NOT EXISTS lost_latitude DOUBLE PRECISION");
+    await db.query("ALTER TABLE lost_items ADD COLUMN IF NOT EXISTS lost_longitude DOUBLE PRECISION");
+    await db.query("ALTER TABLE found_items ADD COLUMN IF NOT EXISTS found_latitude DOUBLE PRECISION");
+    await db.query("ALTER TABLE found_items ADD COLUMN IF NOT EXISTS found_longitude DOUBLE PRECISION");
     await db.query("SELECT 1");
     console.log("Database connected successfully");
 

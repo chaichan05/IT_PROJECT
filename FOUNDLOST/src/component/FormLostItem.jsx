@@ -4,6 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { campusLocations } from "../data/campusLocations";
 import { colorOptions } from "../data/colorOptions";
+import { addMatchNotification } from "../data/matchNotifications";
 
 const markerIcon = L.icon({
   iconUrl:
@@ -51,6 +52,8 @@ const FormLostItem = () => {
     category: "",
     item_color: "",
     lost_location: "",
+    lost_latitude: "",
+    lost_longitude: "",
     description: "",
     deposit_location: "",
   });
@@ -82,7 +85,8 @@ const FormLostItem = () => {
   };
 
   const handleLostLocationSelect = (location) => {
-    setFormData((prev) => ({ ...prev, lost_location: location.name }));
+    // เมื่อเลือกหมุด ให้เก็บทั้งชื่อสถานที่และพิกัดไว้สำหรับคำนวณระยะในระบบจับคู่
+    setFormData((prev) => ({ ...prev, lost_location: location.name, lost_latitude: location.position[0], lost_longitude: location.position[1] }));
     setStatus(`เลือกสถานที่: ${location.name}`);
     setLostSearchText(location.name);
     setLostSuggestions([]);
@@ -106,8 +110,10 @@ const FormLostItem = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (name === "lost_location") {
+      // หากพิมพ์ชื่อเอง พิกัดเดิมอาจไม่ตรงกับชื่อใหม่ จึงล้างพิกัดออก
       setLostSearchText(value);
       setLostSuggestions(getLocationSuggestions(value));
+      setFormData((prev) => ({ ...prev, lost_latitude: "", lost_longitude: "" }));
     }
     if (name === "deposit_location") {
       setDepositSearchText(value);
@@ -127,6 +133,8 @@ const FormLostItem = () => {
       category: "",
       item_color: "",
       lost_location: "",
+      lost_latitude: "",
+      lost_longitude: "",
       description: "",
       deposit_location: "",
     });
@@ -145,6 +153,9 @@ const FormLostItem = () => {
     e.preventDefault();
     setStatus("กำลังส่งข้อมูล...");
 
+    // เก็บข้อมูลก่อน reset form เพื่อใช้เปรียบเทียบในกล่องแจ้งเตือน หากพบคู่ที่มากกว่า 90%
+    const submittedItem = { ...formData };
+
     const data = new FormData();
     data.append("image", formData.image);
     data.append("lost_date", formData.lost_date);
@@ -152,6 +163,9 @@ const FormLostItem = () => {
     data.append("category", formData.category);
     data.append("item_color", formData.item_color);
     data.append("lost_location", formData.lost_location);
+    // ส่งพิกัดไปพร้อมข้อมูลรายการ (จะเป็นค่าว่างหากไม่ได้เลือกหมุด)
+    data.append("lost_latitude", formData.lost_latitude);
+    data.append("lost_longitude", formData.lost_longitude);
     data.append("description", formData.description);
     data.append("deposit_location", formData.deposit_location);
 
@@ -163,7 +177,12 @@ const FormLostItem = () => {
 
       if (response.ok) {
         const result = await response.json();
-        setStatus(`บันทึกสำเร็จ หมายเลขรายการ ${result.item_id}`);
+        if (result.matches?.length) {
+          addMatchNotification({ source: { ...submittedItem, item_id: result.item_id }, match: result.matches[0], type: "lost" });
+          setStatus(`บันทึกสำเร็จ และพบรายการที่ตรงกัน ${Math.round(result.matches[0].score)}%`);
+        } else {
+          setStatus(`บันทึกสำเร็จ หมายเลขรายการ ${result.item_id}`);
+        }
         resetForm();
       } else {
         const error = await response.json();

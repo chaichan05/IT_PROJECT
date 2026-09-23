@@ -4,8 +4,9 @@ import Loading from "./page/Loading";
 import FoundItem from "./page/FoundItem";
 import LostItem from "./page/LostItem";
 import LostPage from "./page/LostPage";
-import FoundPage from "./page/foundPage";
+import FoundPage from "./page/FoundPage";
 import Login from "./page/Login";
+import MatchNotificationPage from "./page/MatchNotificationPage";
 import ProtectedRoute from "./page/ProtectedRoute";
 
 const protectedElement = (element) => (
@@ -21,9 +22,10 @@ function App() {
         <Route path="/lostItem" element={protectedElement(<LostItem />)} />
         <Route path="/foundPage" element={protectedElement(<FoundPage />)} />
         <Route path="/lostPage" element={protectedElement(<LostPage />)} />
+        <Route path="/notifications" element={protectedElement(<MatchNotificationPage />)} />
         <Route path="/login" element={<Login />} />
       </Routes>
-    </BrowserRouter>
+    </BrowserRouter> 
   );
 }
 

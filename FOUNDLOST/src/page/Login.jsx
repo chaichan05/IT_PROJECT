@@ -1,102 +1,162 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
+import background from "../assets/images/bg2.png";
+import logo from "../assets/images/logo.png";
+import "./Login.css";
+import Navbar from "../component/Navbar";
 
 const Login = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const [email, setEmail] = useState("");
-    const [otp, setOtp] = useState("");
-    const [message, setMessage] = useState(location.state?.message || "");
-    const [messageOtp, setMessageOtp] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [message, setMessage] = useState(location.state?.message || "");
+  const [messageOtp, setMessageOtp] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [showOtp, setShowOtp] = useState(false);
 
-    // ส่ง OTP
-    const sendOTP = async () => {
-        try {
-            localStorage.removeItem("isLoggedIn");
-            const response = await axios.post(
-                "http://localhost:3000/api/send-otp",
-                {
-                    email: email
-                },
-            );
-            if (response.data.success) {
-                setMessage("ส่ง OTP สำเร็จแล้ว");
-            }
-            console.log(response.data);
+  const sendOTP = async () => {
+    if (!email.trim()) {
+      setMessage("กรุณากรอกชื่อผู้ใช้ก่อน");
+      return;
+    }
 
-        } catch (error) {
-            console.log(error.response?.data || error.message);
-            setMessage(
-                error.response?.data?.message || "ไม่สามารถส่ง OTP ได้"
-            );
-        }
-    };
+    try {
+      setIsSending(true);
+      setMessage("");
+      setMessageOtp("");
+      localStorage.removeItem("isLoggedIn");
+      const response = await axios.post("http://localhost:3000/api/send-otp", {
+        email: email.trim(),
+      });
 
-    // Verify OTP
-    const verifyOTP = async () => {
-        try {
-            const response = await axios.post(
-                "http://localhost:3000/api/verify-otp",
-                {
-                    email: email,
-                    otp: otp
-                }
-            );
-            console.log(response.data);
-            localStorage.setItem("isLoggedIn", "true");
-            localStorage.setItem("email", email);
-            setMessageOtp("OTP ถูกต้อง");
+      if (response.data.success) {
+        setMessage("ส่งรหัส OTP ไปยังอีเมลของคุณแล้ว");
+      }
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message || "ไม่สามารถส่งรหัส OTP ได้ กรุณาลองอีกครั้ง"
+      );
+    } finally {
+      setIsSending(false);
+    }
+  };
 
-            setTimeout(() => {
-                navigate("/foundPage");
-            }, 2000);
-        } catch (error) {
-            console.log(error.response?.data || error.messageOtp);
-            setMessageOtp(
-                error.response?.data?.messageOtp || " OTP ไม่ถูกต้อง"
-            );
-        }
-    };
+  const verifyOTP = async () => {
+    try {
+      setIsVerifying(true);
+      setMessageOtp("");
+      await axios.post("http://localhost:3000/api/verify-otp", {
+        email: email.trim(),
+        otp: otp.trim(),
+      });
 
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("email", email.trim());
+      setMessageOtp("ยืนยันตัวตนสำเร็จ กำลังพาไปหน้ารายการ…");
+      setTimeout(() => navigate("/foundPage"), 900);
+    } catch (error) {
+      setMessageOtp(
+        error.response?.data?.message || "รหัส OTP ไม่ถูกต้อง กรุณาลองอีกครั้ง"
+      );
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
-    return (
-        <main className="grid min-h-screen place-items-center bg-slate-100 p-6">
-            <section className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-lg">
-                <h1 className="mb-2 text-2xl font-bold text-slate-800">Login</h1>
-                <p className="mb-5 text-slate-500">Enter your email to receive an OTP.</p>
-                <input
-                    className="mb-3 w-full rounded-lg border border-slate-300 px-3 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-                <button onClick={sendOTP} className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700">
-                    Send OTP
-                </button>
-                {message && (
-                    <p>{message}</p>
-                )}
+    if (!email.trim() || !otp.trim()) {
+      setMessageOtp("กรุณากรอกชื่อผู้ใช้และรหัส OTP ให้ครบถ้วน");
+      return;
+    }
 
-                <input
-                    className="mb-3 mt-5 w-full rounded-lg border border-slate-300 px-3 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                    type="text"
-                    placeholder="OTP 6 หลัก"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                />
+    await verifyOTP();
+  };
 
-                <button onClick={verifyOTP} className="w-full rounded-lg border border-blue-600 px-4 py-3 font-medium text-blue-600 transition hover:bg-blue-50">
-                    Verify OTP
-                </button>
-                {messageOtp && (
-                    <p>{messageOtp}</p>
-                )}
-            </section>
-        </main>
-    );
+  return (
+    <div className="app-page-with-navbar">
+      <Navbar />
+      <main className="login-page">
+      <section className="login-shell" aria-label="เข้าสู่ระบบ FOUND&LOST">
+        <img className="login-background" src={background} alt="" aria-hidden="true" />
+
+        <div className="login-brand">
+          <img src={logo} alt="KU Found and Lost" />
+        </div>
+
+        <section className="login-card">
+          <div className="login-card-heading">
+            <span className="login-back" aria-hidden="true">‹</span>
+            <h1>เข้าสู่ระบบ</h1>
+          </div>
+
+          <form onSubmit={handleSubmit} noValidate>
+            <label htmlFor="email">ชื่อผู้ใช้</label>
+            <div className="email-field-row">
+              <input
+                id="email"
+                type="email"
+                autoComplete="username"
+                placeholder="กรอก username ของคุณ"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+              <button
+                className="send-otp-button"
+                type="button"
+                onClick={sendOTP}
+                disabled={isSending}
+              >
+                {isSending ? "กำลังส่ง" : "ส่ง OTP"}
+              </button>
+            </div>
+            {message && <p className="login-message" role="status">{message}</p>}
+
+            <label htmlFor="otp">รหัส OTP</label>
+            <div className="password-field">
+              <input
+                id="otp"
+                type={showOtp ? "text" : "password"}
+                autoComplete="one-time-code"
+                placeholder="กรอกรหัส OTP 6 หลัก"
+                maxLength={6}
+                value={otp}
+                onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))}
+              />
+              <button
+                className="password-visibility"
+                type="button"
+                onClick={() => setShowOtp((current) => !current)}
+                aria-label={showOtp ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+              >
+                {showOtp ? "◉" : "⌧"}
+              </button>
+            </div>
+
+            <button className="login-submit" type="submit" disabled={isSending || isVerifying}>
+              {isSending ? "กำลังส่งรหัส" : isVerifying ? "กำลังเข้าสู่ระบบ" : "เข้าสู่ระบบ"}
+            </button>
+            {messageOtp && <p className="login-message login-message--otp" role="status">{messageOtp}</p>}
+          </form>
+
+          <div className="login-divider"><span>หรือเข้าสู่ระบบด้วย</span></div>
+          <button
+            className="google-button"
+            type="button"
+            onClick={() => setMessageOtp("ระบบลงชื่อเข้าใช้ด้วย Google ยังไม่เปิดใช้งาน")}
+          >
+            <span className="google-mark" aria-hidden="true">G</span>
+            Google
+          </button>
+        </section>
+      </section>
+      </main>
+    </div>
+  );
 };
 
 export default Login;
