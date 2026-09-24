@@ -2,7 +2,7 @@
 .app-navbar__brand { display: grid; width: 100%; height: 62px; place-items: center; background: #007975; color: inherit; font-size: 15px; font-weight: 800; letter-spacing: -.04em; text-decoration: none; }
 .app-navbar__menu { display: flex; width: 100%; flex-direction: column; align-items: center; gap: 10px; padding-top: 1px; }
 .app-navbar__link { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 7px; color: inherit; opacity: .94; transition: background-color 160ms ease, opacity 160ms ease; }
-.app-navbar__link:hover, .app-navbar__link:focus-visible, .app-navbar__link.is-active { background: rgb(255 255 255 / 18%); color: #fff; opacity: 1; outline: none; }
+.app-navbar__link:hover, .app-navbar__link:focus-visible, .app-navbar__link.is-active { background: #004f4d; color: #fff; opacity: 1; outline: none; }
 .app-navbar__link svg { width: 17px; height: 17px; fill: currentColor; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
 .app-page-with-navbar { min-height: 100dvh; padding-left: 62px; }
 @media (max-width: 640px) { .app-navbar { position: sticky; top: 0; width: 100%; min-height: 52px; height: 52px; flex-direction: row; justify-content: space-between; } .app-navbar__brand { width: 52px; height: 52px; } .app-navbar__menu { height: 100%; flex: 1; flex-direction: row; justify-content: space-evenly; gap: 0; padding: 0; } .app-page-with-navbar { padding-left: 0; } }

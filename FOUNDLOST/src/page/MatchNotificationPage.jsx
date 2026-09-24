@@ -84,7 +84,7 @@ function MatchNotificationPage() {
         </section>
         <section className="mt-8"><h2 className="text-lg font-bold text-slate-900">Compare the items</h2><p className="mt-1 text-sm text-slate-500">Verify these are the same item before claiming it.</p><div className="mt-5 grid gap-4 md:grid-cols-2"><ItemCard title="Your report" item={source} location={sourceLocation(source, type)} tone="border-t-rose-400" /><ItemCard title="Found item" item={match} location={candidateLocation(match, type)} score={score} visualScore={visualScore} tone="border-t-emerald-400" /></div></section>
         <section className="mx-auto mt-8 max-w-xl rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm"><h2 className="text-lg font-bold text-slate-900">Are these the same item?</h2><p className="mt-2 text-sm leading-6 text-slate-500">If you confirm, the system will contact you with the next steps for arranging pickup.</p><div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row"><button type="button" onClick={() => handleResponse("Match confirmed. The notification has been cleared.")} className="rounded-lg bg-teal-700 px-5 py-3 text-sm font-bold text-white hover:bg-teal-800">? This is mine!</button><button type="button" onClick={() => handleResponse("We will keep searching for another match.")} className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50">? No, keep searching</button></div></section>
-        {response && <p className="mt-5 text-center text-sm font-medium text-teal-700" role="status">{response}</p>}
+        {response && <output className="mt-5 block text-center text-sm font-medium text-teal-700">{response}</output>}
       </main>
     </div>
   );

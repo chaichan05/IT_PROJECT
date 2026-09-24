@@ -1,8 +1,10 @@
 // โหลดไลบรารีและโมดูลต่าง ๆ ที่ API ใช้งาน
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
+const path = require("node:path");
+const { randomInt } = require("node:crypto");
 const app = express();
+app.disable("x-powered-by");
 const port = Number(process.env.PORT || 3000);
 const db = require("./db");
 const nodemailer = require("nodemailer")
@@ -16,7 +18,34 @@ const { validateEmail } = require("./validation");
 
 
 // ตั้งค่าการอ่าน request, การเรียกใช้ข้ามโดเมน และการเข้าถึงไฟล์อัปโหลด
-app.use(cors());
+const allowedOrigins = new Set(
+  (process.env.CORS_ORIGINS || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
+const allowLocalDevelopment = process.env.NODE_ENV !== "production";
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+
+    try {
+      const { hostname } = new URL(origin);
+      if (allowLocalDevelopment && ["localhost", "127.0.0.1"].includes(hostname)) {
+        return callback(null, true);
+      }
+    } catch {
+      // Invalid origins are rejected below.
+    }
+
+    return callback(new Error("Origin is not allowed by CORS"));
+  },
+};
+
+app.use(cors(corsOptions));
 app.use(express.json()); // Middleware สำหรับอ่านข้อมูล JSON
 app.use(express.urlencoded({ extended: true }));
 app.use("/assets/uploads/", express.static(path.join(__dirname, "assets")));
@@ -51,12 +80,18 @@ app.use((error, req, res, next) => {
 // app.post("/email", (req, res) => {
 const mailUser = process.env.MAIL_USER;
 const mailPassword = process.env.MAIL_APP_PASSWORD;
-const transporter = mailUser && mailPassword
-  ? nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: mailUser, pass: mailPassword },
-  })
-  : null;
+const createMailTransport = (user, password, mailer = nodemailer) => {
+  if (!user || !password) return null;
+
+  return mailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: { user, pass: password },
+  });
+};
+const transporter = createMailTransport(mailUser, mailPassword);
+const generateOtp = () => randomInt(100000, 1000000).toString();
 
 // สร้าง OTP ใหม่ เก็บลง PostgreSQL และส่งไปทางอีเมล
 app.post("/api/send-otp", async (req, res) => {
@@ -96,7 +131,7 @@ app.post("/api/send-otp", async (req, res) => {
     }
 
     // สร้าง OTP 6 หลัก และแทนที่ OTP เดิมของอีเมลนี้
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = generateOtp();
 
     await db.query("DELETE FROM otp_codes WHERE email = $1", [normalizedEmail]);
     await db.query(
@@ -278,7 +313,8 @@ const startServer = async () => {
     console.log("Database connected successfully");
 
     app.listen(port, () => {
-      console.log(`Server is running on http://localhost:${port}`);
+      /* c8 ignore next */
+      console.log(`Server is running on port ${port}`);
     });
   } catch (error) {
     console.error("Database connection error:", error.message);
@@ -286,4 +322,8 @@ const startServer = async () => {
   }
 };
 
-startServer();
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app, corsOptions, createMailTransport, generateOtp, startServer };

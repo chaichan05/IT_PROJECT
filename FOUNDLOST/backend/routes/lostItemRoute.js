@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const path = require("path");
+const path = require("node:path");
 const lostItemController = require("../controller/lostItemController");
 
 const uploadsDir = path.join(__dirname,"..", "assets", "lostUploads");

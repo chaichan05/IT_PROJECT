@@ -4,6 +4,12 @@ import bg from "../assets/images/bg2.png";
 import logo from "../assets/images/logo.png";
 import Navbar from "../component/Navbar";
 
+const SPINNER_SEGMENTS = new Array(10).fill(null).map((_, index) => ({
+  id: `spinner-segment-${index + 1}`,
+  rotation: 36 * (index + 1),
+  delay: index * 0.1,
+}));
+
 const Loading = () => {
   const navigate = useNavigate();
 
@@ -36,13 +42,13 @@ const Loading = () => {
 
         {/* Spinner */}
         <div className="relative w-10 h-10">
-          {[...Array(10)].map((_, i) => (
+          {SPINNER_SEGMENTS.map((segment) => (
             <div
-              key={i}
+              key={segment.id}
               className="absolute left-1/2 top-1/2 w-[3px] h-[14px] rounded-full bg-[#006664] origin-bottom animate-pulse"
               style={{
-                transform: `translate(-50%, -100%) rotate(${36 * (i + 1)}deg) translateY(-14px)`,
-                animationDelay: `${i * 0.1}s`,
+                transform: `translate(-50%, -100%) rotate(${segment.rotation}deg) translateY(-14px)`,
+                animationDelay: `${segment.delay}s`,
                 animationDuration: "1s",
               }}
             />

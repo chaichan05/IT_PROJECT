@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { campusLocations } from "../data/campusLocations";
 import { colorOptions } from "../data/colorOptions";
 import { addMatchNotification } from "../data/matchNotifications";
+import LocationSuggestions from "./LocationSuggestions";
 
 const markerIcon = L.icon({
   iconUrl:
@@ -241,8 +242,9 @@ const FormLostItem = () => {
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <div className="mb-4">
-          <label className="block mb-2 font-medium">รูปภาพสิ่งของ</label>
+          <label htmlFor="lost-image" className="block mb-2 font-medium">รูปภาพสิ่งของ</label>
           <input
+            id="lost-image"
             ref={fileInputRef}
             type="file"
             name="image"
@@ -254,8 +256,9 @@ const FormLostItem = () => {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="mb-4">
-            <label className="block mb-2 font-medium">วันที่พบ</label>
+            <label htmlFor="lost-date" className="block mb-2 font-medium">วันที่พบ</label>
             <input
+              id="lost-date"
               type="date"
               name="lost_date"
               value={formData.lost_date}
@@ -266,8 +269,9 @@ const FormLostItem = () => {
           </div>
 
           <div className="mb-4">
-            <label className="block mb-2 font-medium">ชื่อสิ่งของ</label>
+            <label htmlFor="lost-item-name" className="block mb-2 font-medium">ชื่อสิ่งของ</label>
             <input
+              id="lost-item-name"
               type="text"
               name="item_name"
               value={formData.item_name}
@@ -278,8 +282,9 @@ const FormLostItem = () => {
           </div>
 
           <div className="mb-4">
-            <label className="block mb-2 font-medium">หมวดหมู่</label>
+            <label htmlFor="lost-category" className="block mb-2 font-medium">หมวดหมู่</label>
             <select
+              id="lost-category"
               name="category"
               value={formData.category}
               onChange={handleChange}
@@ -295,8 +300,8 @@ const FormLostItem = () => {
             </select>
           </div>
 
-          <div className="mb-4 md:col-span-2">
-            <label className="block mb-2 font-medium">สีสิ่งของ</label>
+          <fieldset className="mb-4 md:col-span-2">
+            <legend className="block mb-2 font-medium">สีสิ่งของ</legend>
             <div className="flex items-center gap-3 flex-wrap">
               {colorOptions.map((color) => {
                 const isSelected = formData.item_color === color.name;
@@ -334,11 +339,12 @@ const FormLostItem = () => {
                 );
               })}
             </div>
-          </div>
+          </fieldset>
 
           <div className="mb-4 relative">
-            <label className="block mb-2 font-medium">สถานที่พบ</label>
+            <label htmlFor="lost-location" className="block mb-2 font-medium">สถานที่พบ</label>
             <input
+              id="lost-location"
               type="text"
               name="lost_location"
               value={lostSearchText}
@@ -348,25 +354,17 @@ const FormLostItem = () => {
               autoComplete="off"
               required
             />
-            {lostSuggestions.length > 0 && (
-              <ul className="absolute z-10 w-full mt-1 max-h-60 overflow-auto rounded border bg-white shadow-lg">
-                {lostSuggestions.map((location) => (
-                  <li
-                    key={location.name}
-                    className="cursor-pointer px-3 py-2 hover:bg-slate-100"
-                    onClick={() => handleLostLocationSelect(location)}
-                  >
-                    {location.name}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <LocationSuggestions
+              locations={lostSuggestions}
+              onSelect={handleLostLocationSelect}
+            />
           </div>
         </div>
 
         <div className="mb-4">
-          <label className="block mb-2 font-medium">รายละเอียดเพิ่มเติม</label>
+          <label htmlFor="lost-description" className="block mb-2 font-medium">รายละเอียดเพิ่มเติม</label>
           <textarea
+            id="lost-description"
             name="description"
             value={formData.description}
             onChange={handleChange}
@@ -376,10 +374,11 @@ const FormLostItem = () => {
         </div>
 
         <div className="mb-6 relative">
-          <label className="block mb-2 font-medium">
+          <label htmlFor="lost-deposit-location" className="block mb-2 font-medium">
             สถานที่ที่สามารถไปรับของได้
           </label>
           <input
+            id="lost-deposit-location"
             type="text"
             name="deposit_location"
             value={depositSearchText}
@@ -389,19 +388,10 @@ const FormLostItem = () => {
             autoComplete="off"
             required
           />
-          {depositSuggestions.length > 0 && (
-            <ul className="absolute z-10 w-full mt-1 max-h-60 overflow-auto rounded border bg-white shadow-lg">
-              {depositSuggestions.map((location) => (
-                <li
-                  key={location.name}
-                  className="cursor-pointer px-3 py-2 hover:bg-slate-100"
-                  onClick={() => handleDepositLocationSelect(location)}
-                >
-                  {location.name}
-                </li>
-              ))}
-            </ul>
-          )}
+          <LocationSuggestions
+            locations={depositSuggestions}
+            onSelect={handleDepositLocationSelect}
+          />
         </div>
 
         <button

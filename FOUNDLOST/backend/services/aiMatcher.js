@@ -1,5 +1,5 @@
-const fs = require("fs/promises");
-const path = require("path");
+const fs = require("node:fs/promises");
+const path = require("node:path");
 
 const API_URL = "https://api.openai.com/v1/responses";
 const MODEL = process.env.OPENAI_MATCH_MODEL || "gpt-4.1-mini";
@@ -22,7 +22,15 @@ const responseText = (response) => {
 };
 
 const parseJson = (value) => {
-  const cleaned = value.trim().replace(/^```json\s*|\s*```$/g, "");
+  let cleaned = value.trim();
+  if (cleaned.startsWith("```json")) {
+    cleaned = cleaned.slice(7).trimStart();
+  } else if (cleaned.startsWith("```")) {
+    cleaned = cleaned.slice(3).trimStart();
+  }
+  if (cleaned.endsWith("```")) {
+    cleaned = cleaned.slice(0, -3).trimEnd();
+  }
   const start = cleaned.indexOf("{");
   const end = cleaned.lastIndexOf("}");
   if (start === -1 || end === -1) throw new Error("AI matching response did not contain JSON");
@@ -120,12 +128,16 @@ All scores are integers from 0 to 100. score is the overall probability that it 
 
   const content = [{ type: "input_text", text: prompt }];
   if (sourceImage) {
-    content.push({ type: "input_text", text: "IMAGE A - photo attached to REPORT A" });
-    content.push({ type: "input_image", image_url: sourceImage, detail: "high" });
+    content.push(
+      { type: "input_text", text: "IMAGE A - photo attached to REPORT A" },
+      { type: "input_image", image_url: sourceImage, detail: "high" }
+    );
   }
   if (candidateImage) {
-    content.push({ type: "input_text", text: "IMAGE B - photo attached to REPORT B" });
-    content.push({ type: "input_image", image_url: candidateImage, detail: "high" });
+    content.push(
+      { type: "input_text", text: "IMAGE B - photo attached to REPORT B" },
+      { type: "input_image", image_url: candidateImage, detail: "high" }
+    );
   }
 
   const response = await fetch(API_URL, {
@@ -164,4 +176,10 @@ All scores are integers from 0 to 100. score is the overall probability that it 
   return result;
 };
 
-module.exports = { aiEnabled, evaluateItemMatch };
+module.exports = {
+  aiEnabled,
+  evaluateItemMatch,
+  numberInRange,
+  parseJson,
+  responseText,
+};

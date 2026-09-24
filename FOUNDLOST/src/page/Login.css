@@ -182,6 +182,7 @@
 }
 
 .login-message {
+  display: block;
   color: #075c58;
   font: 11px/1.35 Arial, "Noto Sans Thai", sans-serif;
   margin: 6px 2px -3px;

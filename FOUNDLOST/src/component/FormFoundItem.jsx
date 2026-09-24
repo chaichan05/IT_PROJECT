@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { campusLocations } from "../data/campusLocations";
 import { colorOptions } from "../data/colorOptions";
 import { addMatchNotification } from "../data/matchNotifications";
+import LocationSuggestions from "./LocationSuggestions";
 
 const markerIcon = L.icon({
   iconUrl:
@@ -254,8 +255,9 @@ const FormFoundItem = () => {
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <div className="mb-4">
-          <label className="block mb-2 font-medium">รูปภาพสิ่งของ</label>
+          <label htmlFor="found-image" className="block mb-2 font-medium">รูปภาพสิ่งของ</label>
           <input
+            id="found-image"
             ref={fileInputRef}
             type="file"
             name="image"
@@ -267,8 +269,9 @@ const FormFoundItem = () => {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="mb-4">
-            <label className="block mb-2 font-medium">วันที่พบ</label>
+            <label htmlFor="found-date" className="block mb-2 font-medium">วันที่พบ</label>
             <input
+              id="found-date"
               type="date"
               name="found_date"
               value={formData.found_date}
@@ -279,8 +282,9 @@ const FormFoundItem = () => {
           </div>
 
           <div className="mb-4">
-            <label className="block mb-2 font-medium">ชื่อสิ่งของ</label>
+            <label htmlFor="found-item-name" className="block mb-2 font-medium">ชื่อสิ่งของ</label>
             <input
+              id="found-item-name"
               type="text"
               name="item_name"
               value={formData.item_name}
@@ -291,8 +295,9 @@ const FormFoundItem = () => {
           </div>
 
           <div className="mb-4">
-            <label className="block mb-2 font-medium">หมวดหมู่</label>
+            <label htmlFor="found-category" className="block mb-2 font-medium">หมวดหมู่</label>
             <select
+              id="found-category"
               name="category"
               value={formData.category}
               onChange={handleChange}
@@ -308,8 +313,8 @@ const FormFoundItem = () => {
             </select>
           </div>
 
-          <div className="mb-4 md:col-span-2">
-            <label className="block mb-2 font-medium">สีสิ่งของ</label>
+          <fieldset className="mb-4 md:col-span-2">
+            <legend className="block mb-2 font-medium">สีสิ่งของ</legend>
             <div className="flex items-center gap-3 flex-wrap">
               {colorOptions.map((color) => {
                 const isSelected = formData.item_color === color.name;
@@ -347,11 +352,12 @@ const FormFoundItem = () => {
                 );
               })}
             </div>
-          </div>
+          </fieldset>
 
           <div className="mb-4 relative">
-            <label className="block mb-2 font-medium">สถานที่พบ</label>
+            <label htmlFor="found-location" className="block mb-2 font-medium">สถานที่พบ</label>
             <input
+              id="found-location"
               type="text"
               name="found_location"
               value={foundSearchText}
@@ -361,25 +367,17 @@ const FormFoundItem = () => {
               autoComplete="off"
               required
             />
-            {foundSuggestions.length > 0 && (
-              <ul className="absolute z-10 w-full mt-1 max-h-60 overflow-auto rounded border bg-white shadow-lg">
-                {foundSuggestions.map((location) => (
-                  <li
-                    key={location.name}
-                    className="cursor-pointer px-3 py-2 hover:bg-slate-100"
-                    onClick={() => handleFoundLocationSelect(location)}
-                  >
-                    {location.name}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <LocationSuggestions
+              locations={foundSuggestions}
+              onSelect={handleFoundLocationSelect}
+            />
           </div>
         </div>
 
         <div className="mb-4">
-          <label className="block mb-2 font-medium">รายละเอียดเพิ่มเติม</label>
+          <label htmlFor="found-description" className="block mb-2 font-medium">รายละเอียดเพิ่มเติม</label>
           <textarea
+            id="found-description"
             name="description"
             value={formData.description}
             onChange={handleChange}
@@ -389,8 +387,9 @@ const FormFoundItem = () => {
         </div>
 
         <div className="mb-6 relative">
-          <label className="block mb-2 font-medium">สถานที่ฝากของ</label>
+          <label htmlFor="found-deposit-location" className="block mb-2 font-medium">สถานที่ฝากของ</label>
           <input
+            id="found-deposit-location"
             type="text"
             name="deposit_location"
             value={depositSearchText}
@@ -400,19 +399,10 @@ const FormFoundItem = () => {
             autoComplete="off"
             required
           />
-          {depositSuggestions.length > 0 && (
-            <ul className="absolute z-10 w-full mt-1 max-h-60 overflow-auto rounded border bg-white shadow-lg">
-              {depositSuggestions.map((location) => (
-                <li
-                  key={location.name}
-                  className="cursor-pointer px-3 py-2 hover:bg-slate-100"
-                  onClick={() => handleDepositLocationSelect(location)}
-                >
-                  {location.name}
-                </li>
-              ))}
-            </ul>
-          )}
+          <LocationSuggestions
+            locations={depositSuggestions}
+            onSelect={handleDepositLocationSelect}
+          />
         </div>
 
         <button

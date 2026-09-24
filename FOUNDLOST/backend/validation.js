@@ -1,4 +1,3 @@
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 const text = (value, field, { required = false, maxLength }) => {
@@ -56,7 +55,18 @@ const validateItem = (body, dateField, locationField) => {
   return { value: Object.fromEntries(fields.map(([field, result]) => [field, result.value])) };
 };
 
-const validateEmail = (email) =>
-  typeof email === "string" && email.length <= 255 && EMAIL_PATTERN.test(email.trim());
+const validateEmail = (email) => {
+  if (typeof email !== "string") return false;
+
+  const normalized = email.trim();
+  if (!normalized || normalized.length > 255 || /\s/.test(normalized)) return false;
+
+  const atIndex = normalized.indexOf("@");
+  if (atIndex <= 0 || atIndex !== normalized.lastIndexOf("@")) return false;
+
+  const domain = normalized.slice(atIndex + 1);
+  const dotIndex = domain.lastIndexOf(".");
+  return dotIndex > 0 && dotIndex < domain.length - 1;
+};
 
 module.exports = { validateEmail, validateItem };

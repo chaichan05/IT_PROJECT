@@ -77,6 +77,10 @@ const Login = () => {
     await verifyOTP();
   };
 
+  let submitLabel = "เข้าสู่ระบบ";
+  if (isVerifying) submitLabel = "กำลังเข้าสู่ระบบ";
+  if (isSending) submitLabel = "กำลังส่งรหัส";
+
   return (
     <div className="app-page-with-navbar">
       <Navbar />
@@ -114,7 +118,7 @@ const Login = () => {
                 {isSending ? "กำลังส่ง" : "ส่ง OTP"}
               </button>
             </div>
-            {message && <p className="login-message" role="status">{message}</p>}
+            {message && <output className="login-message">{message}</output>}
 
             <label htmlFor="otp">รหัส OTP</label>
             <div className="password-field">
@@ -138,9 +142,9 @@ const Login = () => {
             </div>
 
             <button className="login-submit" type="submit" disabled={isSending || isVerifying}>
-              {isSending ? "กำลังส่งรหัส" : isVerifying ? "กำลังเข้าสู่ระบบ" : "เข้าสู่ระบบ"}
+              {submitLabel}
             </button>
-            {messageOtp && <p className="login-message login-message--otp" role="status">{messageOtp}</p>}
+            {messageOtp && <output className="login-message login-message--otp">{messageOtp}</output>}
           </form>
 
           <div className="login-divider"><span>หรือเข้าสู่ระบบด้วย</span></div>
@@ -150,7 +154,7 @@ const Login = () => {
             onClick={() => setMessageOtp("ระบบลงชื่อเข้าใช้ด้วย Google ยังไม่เปิดใช้งาน")}
           >
             <span className="google-mark" aria-hidden="true">G</span>
-            Google
+            <span>Google</span>
           </button>
         </section>
       </section>
